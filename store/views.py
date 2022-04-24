@@ -1,3 +1,4 @@
+from django.db.models import Count, Case, When, Avg
 from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -10,7 +11,9 @@ from store.serializers import BooksSerializer, UserBookRelationSerializer
 
 
 class BooksViewSet(ModelViewSet):
-    queryset = Books.objects.all()
+    queryset = Books.objects.all().annotate(
+            annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
+            rating=Avg('userbookrelation__rate')).order_by('id')
     serializer_class = BooksSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     permission_classes = [IsOwnerOrStaffOrReadOnly]
@@ -30,10 +33,9 @@ class UserBookRelationView(UpdateModelMixin, GenericViewSet):
     lookup_field = 'book'
 
     def get_object(self):
-        obj, _ = UserBookRelation.objects.get_or_create(user = self.request.user, book_id = self.kwargs['book'])
+        obj, _ = UserBookRelation.objects.get_or_create(user=self.request.user, book_id=self.kwargs['book'])
         return obj
 
 
 def auth(request):
     return render(request, 'oauth.html')
-
