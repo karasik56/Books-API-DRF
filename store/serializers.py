@@ -4,16 +4,15 @@ from store.models import Books, UserBookRelation
 
 
 class BooksSerializer(ModelSerializer):
-    likes_count = serializers.SerializerMethodField()
     annotated_likes = serializers.IntegerField(read_only=True)
     rating = serializers.DecimalField(max_digits=3, decimal_places=2, read_only=True)
+    price_discount = serializers.DecimalField(max_digits=7, decimal_places=2, read_only=True)
+    owner_name = serializers.CharField(default='', source='owner.username', read_only=True)
 
     class Meta:
         model = Books
-        fields = ('id', 'name', 'price', 'author_name', 'likes_count', 'annotated_likes', 'rating')
-
-    def get_likes_count(self, instanse):
-        return UserBookRelation.objects.filter(book=instanse, like=True).count()
+        fields = ('id', 'name', 'price', 'discount', 'author_name',
+                  'annotated_likes', 'rating', 'price_discount', 'owner_name')
 
 
 class UserBookRelationSerializer(ModelSerializer):
